@@ -365,10 +365,6 @@ The most cost-effective setup often mixes providers. Use the cheapest model that
 
 When mixing providers via OpenRouter, all models must use OpenRouter model IDs (prefixed with provider name).
 
-### Direct OpenAI API (requires server.js changes)
-
-The router currently speaks **Anthropic Messages API** natively. To proxy directly to OpenAI's API (without OpenRouter), you'd need to transform the request/response format. This is on the roadmap but not yet supported — use OpenRouter as the translation layer for now.
-
 ### Updating the systemd service
 
 After changing providers, restart the router to pick up the new API key:
