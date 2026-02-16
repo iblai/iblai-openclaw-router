@@ -38,33 +38,38 @@ The proxy speaks native **Anthropic Messages API** format — it receives the ex
 
 ## 1. Adapting to Any OpenClaw Agent
 
-The router ships with keyword lists tuned for a PM/engineering workflow. To adapt it to your use case, edit the `SCORING` object in `server.js`:
+All scoring config lives in `config.json` (not in server.js). Edit it to match your agent's domain. The server hot-reloads config changes — no restart needed.
+
+Override the config path with: `ROUTER_CONFIG=/path/to/my-config.json`
 
 ### Change the models
 
-```js
-const MODELS = {
-  LIGHT:  "claude-3-5-haiku-20241022",   // cheapest
-  MEDIUM: "claude-sonnet-4-20250514",     // balanced
-  HEAVY:  "claude-opus-4-20250514",       // most capable
-};
+```json
+{
+  "models": {
+    "LIGHT":  "claude-3-5-haiku-20241022",
+    "MEDIUM": "claude-sonnet-4-20250514",
+    "HEAVY":  "claude-opus-4-20250514"
+  }
+}
 ```
 
-Swap these for any Anthropic model IDs. You could also point at different providers entirely by changing the upstream URL and headers in `proxyToAnthropic()`.
+Swap these for any Anthropic model IDs.
 
 ### Customize keyword lists
 
 Each dimension has a keyword list that shifts the score. Add words relevant to your domain:
 
-```js
-// If your agent does customer support:
-simpleKeywords: ["order status", "tracking number", "return policy", "hours", ...],
-relayKeywords: ["forward to agent", "escalate", "transfer to", ...],
-technicalKeywords: ["refund api", "webhook", "stripe", "payment intent", ...],
-
-// If your agent does research:
-reasoningKeywords: ["analyze", "compare", "synthesize", "methodology", ...],
-domainKeywords: ["regression", "p-value", "confidence interval", ...],
+```json
+{
+  "scoring": {
+    "simpleKeywords": ["order status", "tracking number", "return policy", "hours"],
+    "relayKeywords": ["forward to agent", "escalate", "transfer to"],
+    "technicalKeywords": ["refund api", "webhook", "stripe", "payment intent"],
+    "reasoningKeywords": ["analyze", "compare", "synthesize", "methodology"],
+    "domainKeywords": ["regression", "p-value", "confidence interval"]
+  }
+}
 ```
 
 **Rule of thumb:**
@@ -74,17 +79,27 @@ domainKeywords: ["regression", "p-value", "confidence interval", ...],
 
 ### Adjust tier boundaries
 
-```js
-boundaries: {
-  lightMedium: 0.0,    // raise to send more traffic to LIGHT
-  mediumHeavy: 0.35,   // lower to send more traffic to HEAVY
-},
+```json
+{
+  "scoring": {
+    "boundaries": {
+      "lightMedium": 0.0,
+      "mediumHeavy": 0.35
+    }
+  }
+}
 ```
+
+Raise `lightMedium` to send more traffic to LIGHT. Lower `mediumHeavy` to send more to HEAVY.
 
 ### Adjust confidence threshold
 
-```js
-confidenceThreshold: 0.70,  // below this → ambiguous → defaults to MEDIUM
+```json
+{
+  "scoring": {
+    "confidenceThreshold": 0.70
+  }
+}
 ```
 
 Lower = more decisive routing (fewer MEDIUM defaults). Higher = more conservative (more MEDIUM).
@@ -93,19 +108,35 @@ Lower = more decisive routing (fewer MEDIUM defaults). Higher = more conservativ
 
 Weights control how much each signal matters. They roughly sum to 1.0:
 
-```js
-weights: {
-  tokenCount:       0.08,  // long prompts → heavier model
-  codePresence:     0.14,  // code → heavier
-  reasoningMarkers: 0.18,  // reasoning keywords → heaviest weight
-  technicalTerms:   0.10,
-  simpleIndicators: 0.06,  // simple keywords → lighter model
-  relayIndicators:  0.05,  // relay/forwarding → lightest model
-  // ... etc
-},
+```json
+{
+  "scoring": {
+    "weights": {
+      "tokenCount":       0.08,
+      "codePresence":     0.14,
+      "reasoningMarkers": 0.18,
+      "technicalTerms":   0.10,
+      "simpleIndicators": 0.06,
+      "relayIndicators":  0.05
+    }
+  }
+}
 ```
 
 Increase a weight to make that dimension more influential.
+
+### Override thresholds
+
+```json
+{
+  "scoring": {
+    "overrides": {
+      "reasoningKeywordMin": 2,
+      "largeContextTokens": 50000
+    }
+  }
+}
+```
 
 ---
 
@@ -275,9 +306,9 @@ Compare your Anthropic usage dashboard before and after enabling the router. The
 ## Files
 
 ```
-skills/router/
-├── server.js    # The proxy (Node.js, zero deps, ~300 lines)
-└── SKILL.md     # This file
+├── server.js      # The proxy (~250 lines, zero deps)
+├── config.json    # All scoring config (hot-reloaded on change)
+└── README.md      # This file
 ```
 
 ## Environment Variables
@@ -287,3 +318,4 @@ skills/router/
 | `ANTHROPIC_API_KEY` | (required) | Your Anthropic API key |
 | `ROUTER_PORT` | `8402` | Port to listen on |
 | `ROUTER_LOG` | `1` | Set to `0` to disable per-request logging |
+| `ROUTER_CONFIG` | `./config.json` | Path to scoring config file |
