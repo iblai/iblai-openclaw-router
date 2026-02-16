@@ -386,6 +386,56 @@ The config.json changes (model IDs, apiBaseUrl) are hot-reloaded automatically â
 
 ---
 
+## 5. Disabling the Router
+
+### Temporarily (keep config, stop routing)
+
+```bash
+sudo systemctl stop iblai-router
+```
+
+Any OpenClaw workloads using `iblai-router/auto` will fail until you either restart the router or switch them to a direct model. To restart later:
+
+```bash
+sudo systemctl start iblai-router
+```
+
+### Switch specific workloads back to direct models
+
+In your OpenClaw session:
+
+```
+# Revert a cron job to direct Sonnet
+/cron update <jobId> model=anthropic/claude-sonnet-4-20250514
+
+# Revert subagent default
+/config set agents.defaults.subagents.model anthropic/claude-sonnet-4-20250514
+
+# Revert main session
+/model anthropic/claude-opus-4-20250514
+```
+
+### Fully remove
+
+```bash
+# Stop and disable the service
+sudo systemctl stop iblai-router
+sudo systemctl disable iblai-router
+sudo rm /etc/systemd/system/iblai-router.service
+sudo systemctl daemon-reload
+
+# Remove the OpenClaw provider registration
+# In your OpenClaw session:
+/config unset models.providers.iblai-router
+
+# Optionally delete the router files
+rm -rf ~/.openclaw/workspace/router
+```
+
+After removal, make sure no cron jobs or agent configs still reference `iblai-router/auto` â€” they'll error on the next run.
+
+---
+
 ## Files
 
 ```
