@@ -38,7 +38,32 @@ The proxy speaks native **Anthropic Messages API** format — it receives the ex
 
 ## Quick Start (OpenClaw)
 
-Get routing in under 2 minutes on any OpenClaw deployment:
+### Option A: Install as a skill (recommended)
+
+Clone and run the install script — it handles everything:
+
+```bash
+cd ~/.openclaw/workspace
+git clone https://github.com/iblai/iblai-openclaw-router.git router
+bash router/scripts/install.sh
+```
+
+Then register the model in your OpenClaw session:
+
+```
+/config set models.providers.iblai-router.baseUrl http://127.0.0.1:8402
+/config set models.providers.iblai-router.api anthropic-messages
+/config set models.providers.iblai-router.apiKey passthrough
+/config set models.providers.iblai-router.models [{"id":"auto","name":"iblai-router (auto)","reasoning":true,"input":["text","image"],"contextWindow":200000,"maxTokens":8192}]
+```
+
+Done. Use `iblai-router/auto` as your model anywhere.
+
+To uninstall: `bash router/scripts/uninstall.sh`
+
+### Option B: Manual setup
+
+Step-by-step if you prefer full control:
 
 ```bash
 # 1. Clone into your workspace
