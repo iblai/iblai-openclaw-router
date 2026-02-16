@@ -17,7 +17,7 @@ cd router && bash scripts/install.sh
 
 Your agent will clone the repo, run the install script, and register the model provider — all in one go.
 
-That's it — `iblai-router/auto` is now available as a model. Typical savings: **~77%** vs always using the most expensive model. Uninstall anytime with `bash scripts/uninstall.sh`.
+That's it — `iblai-router/auto` is now available as a model. Typical savings: **~77%** vs always using the most expensive model. Uninstall anytime by telling your agent "uninstall iblai-router" or running `bash scripts/uninstall.sh`.
 
 ## How It Works
 
@@ -479,22 +479,23 @@ In your OpenClaw session:
 
 ### Fully remove
 
+Ask your OpenClaw agent:
+
+> Uninstall iblai-router
+
+Or run it manually:
+
 ```bash
-# Stop and disable the service
-sudo systemctl stop iblai-router
-sudo systemctl disable iblai-router
-sudo rm /etc/systemd/system/iblai-router.service
-sudo systemctl daemon-reload
-
-# Remove the OpenClaw provider registration
-# In your OpenClaw session:
-/config unset models.providers.iblai-router
-
-# Optionally delete the router files
-rm -rf ~/.openclaw/workspace/router
+bash ~/.openclaw/workspace/router/scripts/uninstall.sh
 ```
 
-After removal, make sure no cron jobs or agent configs still reference `iblai-router/auto` — they'll error on the next run.
+Then remove the provider registration in your OpenClaw session:
+
+```
+/config unset models.providers.iblai-router
+```
+
+Make sure no cron jobs or agent configs still reference `iblai-router/auto` — they'll error on the next run.
 
 ---
 
