@@ -2,13 +2,18 @@
 
 A zero-dependency Node.js proxy that sits between OpenClaw and the Anthropic API, automatically routing each request to the cheapest Claude model capable of handling it. Inspired by [ClawRouter](https://github.com/BlockRunAI/ClawRouter)'s weighted scoring approach.
 
-**Install in 3 commands:**
+**Install from your terminal:**
 
 ```bash
 git clone https://github.com/iblai/iblai-openclaw-router.git router
 cd router && bash scripts/install.sh
-# paste the /config commands it prints into your OpenClaw session
 ```
+
+**Or just ask your OpenClaw agent:**
+
+> Install iblai-router from https://github.com/iblai/iblai-openclaw-router
+
+Your agent will clone the repo, run the install script, and register the model provider — all in one go.
 
 That's it — `iblai-router/auto` is now available as a model. Typical savings: **~77%** vs always using the most expensive model. Uninstall anytime with `bash scripts/uninstall.sh`.
 
@@ -48,9 +53,15 @@ The proxy speaks native **Anthropic Messages API** format — it receives the ex
 
 ## Quick Start (OpenClaw)
 
-### Option A: Install as a skill (recommended)
+### Option A: Ask your OpenClaw agent (easiest)
 
-Clone and run the install script — it handles everything:
+In your OpenClaw chat or TUI, just say:
+
+> Install iblai-router from https://github.com/iblai/iblai-openclaw-router
+
+Your agent will clone the repo, run the install script, and register `iblai-router/auto` as a model provider automatically.
+
+### Option B: Install script
 
 ```bash
 cd ~/.openclaw/workspace
@@ -71,7 +82,7 @@ Done. Use `iblai-router/auto` as your model anywhere.
 
 To uninstall: `bash router/scripts/uninstall.sh`
 
-### Option B: Manual setup
+### Option C: Manual setup
 
 Step-by-step if you prefer full control:
 
