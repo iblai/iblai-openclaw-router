@@ -19,7 +19,28 @@ cd router && bash scripts/install.sh
 
 Your agent will clone the repo, run the install script, and register the model provider — all in one go.
 
-That's it — `iblai-router/auto` is now available as a model. Typical savings: **~77%** vs always using the most expensive model. Uninstall anytime by telling your agent "uninstall iblai-router" or running `bash scripts/uninstall.sh`.
+That's it — `iblai-router/auto` is now available as a model. Typical savings: **~80%** vs always using the most expensive model. Uninstall anytime by telling your agent "uninstall iblai-router" or running `bash scripts/uninstall.sh`.
+
+### Sample savings after 30 days
+
+| | Without router | With router | Saved |
+|---|---|---|---|
+| Cron jobs (ops alerts, inbox checks) | $121.63 | $24.33 | $97.31 |
+| Subagent tasks (issue triage, comms) | $58.20 | $17.46 | $40.74 |
+| Deep reasoning (strategy, analysis) | $25.00 | $25.00 | $0.00 |
+| **Total** | **$204.83** | **$66.79** | **$138.05 (67%)** |
+
+> Deep reasoning tasks still route to Opus — the router only saves money where a lighter model can handle the job. Real-world savings depend on your workload mix; cron-heavy setups (alerts, monitoring, email processing) see 75–80%.
+
+**Check your savings anytime** — just ask your agent:
+
+> What are my iblai-router cost savings?
+
+Or from the command line:
+
+```bash
+curl -s http://127.0.0.1:8402/stats | python3 -m json.tool
+```
 
 ## How It Works
 
