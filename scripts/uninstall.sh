@@ -29,10 +29,82 @@ if [ -d "$ROUTER_DIR" ]; then
   echo "  ✓ Router files removed from $ROUTER_DIR"
 fi
 
+# 4. Clean up OpenClaw config
+OPENCLAW_JSON="$HOME/.openclaw/openclaw.json"
+if [ -f "$OPENCLAW_JSON" ] && command -v python3 &> /dev/null; then
+  python3 - "$OPENCLAW_JSON" << 'PYEOF'
+import json, sys
+
+config_path = sys.argv[1]
+with open(config_path) as f:
+    cfg = json.load(f)
+
+changed = False
+
+# Remove model provider
+providers = cfg.get("models", {}).get("providers", {})
+if "iblai-router" in providers:
+    del providers["iblai-router"]
+    # Clean up empty parents
+    if not providers:
+        cfg["models"].pop("providers", None)
+    if not cfg.get("models"):
+        cfg.pop("models", None)
+    changed = True
+    print("  ✓ Removed model provider from openclaw.json")
+
+# Remove from model allowlist
+models_allowlist = cfg.get("agents", {}).get("defaults", {}).get("models", {})
+if "iblai-router/auto" in models_allowlist:
+    del models_allowlist["iblai-router/auto"]
+    changed = True
+    print("  ✓ Removed iblai-router/auto from model allowlist")
+
+# Remove legacy smart-router provider if present
+if "smart-router" in cfg.get("models", {}).get("providers", {}):
+    del cfg["models"]["providers"]["smart-router"]
+    changed = True
+    print("  ✓ Removed legacy smart-router provider")
+
+if changed:
+    with open(config_path, "w") as f:
+        json.dump(cfg, f, indent=2)
+        f.write("\n")
+else:
+    print("  ✓ openclaw.json already clean")
+PYEOF
+fi
+
+# 5. Clean up cached models.json
+MODELS_JSON="$HOME/.openclaw/agents/main/agent/models.json"
+if [ -f "$MODELS_JSON" ] && command -v python3 &> /dev/null; then
+  python3 - "$MODELS_JSON" << 'PYEOF'
+import json, sys
+
+models_path = sys.argv[1]
+with open(models_path) as f:
+    data = json.load(f)
+
+changed = False
+providers = data.get("providers", {})
+for key in ["iblai-router", "smart-router"]:
+    if key in providers:
+        del providers[key]
+        changed = True
+
+if changed:
+    with open(models_path, "w") as f:
+        json.dump(data, f, indent=2)
+        f.write("\n")
+    print("  ✓ Cleaned up cached models.json")
+PYEOF
+fi
+
 echo ""
-echo "  Don't forget to remove the OpenClaw provider in your session:"
-echo "  /config unset models.providers.iblai-router"
+echo "  ⚠ Restart OpenClaw to apply changes:"
+echo "    openclaw gateway restart"
 echo ""
-echo "  And switch any workloads using iblai-router/auto to a direct model."
+echo "  If any cron jobs or subagents used iblai-router/auto, switch them"
+echo "  to a direct model (e.g. anthropic/claude-sonnet-4-20250514)."
 echo ""
 echo "Done."
