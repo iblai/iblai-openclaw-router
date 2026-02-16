@@ -36,6 +36,92 @@ The proxy speaks native **Anthropic Messages API** format — it receives the ex
 
 ---
 
+## Quick Start (OpenClaw)
+
+Get routing in under 2 minutes on any OpenClaw deployment:
+
+```bash
+# 1. Clone into your workspace
+cd ~/.openclaw/workspace
+git clone https://github.com/iblai/iblai-openclaw-router.git router
+
+# 2. Create the systemd service
+sudo tee /etc/systemd/system/iblai-router.service > /dev/null << EOF
+[Unit]
+Description=iblai-router - Claude model routing
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=$(which node) $HOME/.openclaw/workspace/router/server.js
+Environment=ANTHROPIC_API_KEY=$(grep -o '"key": "[^"]*"' ~/.openclaw/agents/main/agent/auth-profiles.json 2>/dev/null | head -1 | cut -d'"' -f4 || echo "sk-ant-YOUR-KEY-HERE")
+Environment=ROUTER_CONFIG=$HOME/.openclaw/workspace/router/config.json
+Environment=ROUTER_PORT=8402
+Environment=ROUTER_LOG=1
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# 3. Start the router
+sudo systemctl daemon-reload
+sudo systemctl enable --now iblai-router
+
+# 4. Verify it's running
+curl -s http://127.0.0.1:8402/health | jq .
+
+# 5. Register with OpenClaw (run this in your OpenClaw chat or TUI)
+```
+
+Then in your OpenClaw session, run:
+
+```
+/config set models.providers.iblai-router.baseUrl http://127.0.0.1:8402
+/config set models.providers.iblai-router.api anthropic-messages
+/config set models.providers.iblai-router.apiKey passthrough
+/config set models.providers.iblai-router.models [{"id":"auto","name":"iblai-router (auto)","reasoning":true,"input":["text","image"],"contextWindow":200000,"maxTokens":8192}]
+```
+
+Or patch your `openclaw.json` directly:
+
+```json
+{
+  "models": {
+    "providers": {
+      "iblai-router": {
+        "baseUrl": "http://127.0.0.1:8402",
+        "api": "anthropic-messages",
+        "apiKey": "passthrough",
+        "models": [{
+          "id": "auto",
+          "name": "iblai-router (auto)",
+          "reasoning": true,
+          "input": ["text", "image"],
+          "contextWindow": 200000,
+          "maxTokens": 8192
+        }]
+      }
+    }
+  }
+}
+```
+
+Now use `iblai-router/auto` anywhere you'd use a model ID:
+
+```
+/model iblai-router/auto
+```
+
+That's it. Every request now routes to Haiku/Sonnet/Opus based on complexity. Check savings anytime:
+
+```bash
+curl -s http://127.0.0.1:8402/stats | jq .
+```
+
+---
+
 ## 1. Adapting to Any OpenClaw Agent
 
 All scoring config lives in `config.json` (not in server.js). Edit it to match your agent's domain. The server hot-reloads config changes — no restart needed.
@@ -140,100 +226,16 @@ Increase a weight to make that dimension more influential.
 
 ---
 
-## 2. Activation
+## 2. Where to Use It
 
-### Prerequisites
+Once registered, use `iblai-router/auto` anywhere OpenClaw accepts a model ID:
 
-- Node.js (any version OpenClaw supports)
-- An Anthropic API key
-- OpenClaw running in local gateway mode
-
-### Step 1: Place the server
-
-Copy `server.js` to your workspace (e.g. `~/.openclaw/workspace/skills/router/server.js`).
-
-### Step 2: Create the systemd service
-
-```bash
-cat > /etc/systemd/system/iblai-router.service << 'EOF'
-[Unit]
-Description=iblai-router - Claude model routing
-After=network.target
-
-[Service]
-Type=simple
-ExecStart=/usr/bin/node /root/.openclaw/workspace/skills/router/server.js
-Environment=ANTHROPIC_API_KEY=sk-ant-your-key-here
-Environment=ROUTER_PORT=8402
-Environment=ROUTER_LOG=1
-Restart=always
-RestartSec=3
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-systemctl daemon-reload
-systemctl enable iblai-router
-systemctl start iblai-router
-```
-
-Verify it's running:
-
-```bash
-curl http://127.0.0.1:8402/health
-# → {"status":"ok","models":{"LIGHT":"claude-3-5-haiku-20241022",...},"port":8402}
-```
-
-### Step 3: Register as an OpenClaw model provider
-
-Add to your `openclaw.json` (or use `/config` or `config.patch`):
-
-```json
-{
-  "models": {
-    "providers": {
-      "iblai-router": {
-        "baseUrl": "http://127.0.0.1:8402",
-        "api": "anthropic-messages",
-        "apiKey": "passthrough",
-        "models": [
-          {
-            "id": "auto",
-            "name": "iblai-router (auto)",
-            "reasoning": true,
-            "input": ["text", "image"],
-            "contextWindow": 200000,
-            "maxTokens": 8192
-          }
-        ]
-      }
-    }
-  }
-}
-```
-
-### Step 4: Use it
-
-**As the default model for all sessions:**
-```json
-{ "agents": { "defaults": { "model": { "primary": "iblai-router/auto" } } } }
-```
-
-**For subagents only:**
-```json
-{ "agents": { "defaults": { "subagents": { "model": "iblai-router/auto" } } } }
-```
-
-**For specific cron jobs:**
-```json
-{ "model": "iblai-router/auto" }
-```
-
-**Per-session override:**
-```
-/model iblai-router/auto
-```
+| Scope | Config |
+|---|---|
+| Default for all sessions | `agents.defaults.model.primary = "iblai-router/auto"` |
+| Subagents only | `agents.defaults.subagents.model = "iblai-router/auto"` |
+| Specific cron job | `"model": "iblai-router/auto"` in the cron job config |
+| Per-session override | `/model iblai-router/auto` |
 
 **Tip:** Keep your main interactive session on a fixed model (e.g. Opus) where latency and quality matter most. Use the router for cron jobs, subagents, and background tasks where cost savings compound.
 
