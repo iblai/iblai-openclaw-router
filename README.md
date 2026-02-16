@@ -72,10 +72,12 @@ sudo systemctl enable --now iblai-router
 # 4. Verify it's running
 curl -s http://127.0.0.1:8402/health | jq .
 
-# 5. Register with OpenClaw (run this in your OpenClaw chat or TUI)
+# 5. Register with OpenClaw
+#    Paste the /config commands below into your OpenClaw chat or TUI,
+#    or patch openclaw.json directly (see below).
 ```
 
-Then in your OpenClaw session, run:
+In your OpenClaw session, run:
 
 ```
 /config set models.providers.iblai-router.baseUrl http://127.0.0.1:8402
