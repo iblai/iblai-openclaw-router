@@ -25,12 +25,12 @@ That's it — `iblai-router/auto` is now available as a model. Typical savings: 
 
 | | Without router | With router | Saved |
 |---|---|---|---|
-| Cron jobs (ops alerts, inbox checks) | $121.63 | $24.33 | $97.31 |
-| Subagent tasks (issue triage, comms) | $58.20 | $17.46 | $40.74 |
+| Cron jobs (ops alerts, inbox checks) | $121.63 | $24.33 | $97.31 (80%) |
+| Subagent tasks (issue triage, comms) | $58.20 | $11.64 | $46.56 (80%) |
 | Deep reasoning (strategy, analysis) | $25.00 | $25.00 | $0.00 |
-| **Total** | **$204.83** | **$66.79** | **$138.05 (67%)** |
+| **Total** | **$204.83** | **$60.97** | **$143.87 (70%)** |
 
-> Deep reasoning tasks still route to Opus — the router only saves money where a lighter model can handle the job. Real-world savings depend on your workload mix; cron-heavy setups (alerts, monitoring, email processing) see 75–80%.
+> The router scores only user messages, not the system prompt — this is critical. OpenClaw sends a large, keyword-rich system prompt with every request, and scoring it inflates every request to the most expensive tier. With system prompt excluded, routine tasks correctly score low and route to cheaper models. Deep reasoning tasks still route to Opus based on their actual content.
 
 **Check your savings anytime** — just ask your agent:
 
