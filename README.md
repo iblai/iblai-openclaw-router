@@ -1,4 +1,6 @@
-# iblai-router — Local Cost-Optimizing Model Router for OpenClaw
+# ibl.ai Router
+
+## Local Cost-Optimizing Model Router for OpenClaw
 
 A zero-dependency Node.js proxy that sits between OpenClaw and the Anthropic API, automatically routing each request to the cheapest Claude model capable of handling it. Inspired by [ClawRouter](https://github.com/BlockRunAI/ClawRouter)'s weighted scoring approach.
 
