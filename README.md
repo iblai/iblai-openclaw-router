@@ -160,13 +160,46 @@ Or patch your `openclaw.json` directly:
 }
 ```
 
-Now use `iblai-router/auto` anywhere you'd use a model ID:
+**Important: restart OpenClaw** after registering the provider. OpenClaw caches available models at startup — without a restart, cron jobs and subagents will fail with `model not allowed: iblai-router/auto`.
 
+```bash
+# Option 1: From your OpenClaw session (if commands.restart is enabled)
+/restart
+
+# Option 2: Enable restart first, then restart
+# In openclaw.json, add: "commands": { "restart": true }
+# Then /restart from your session
+
+# Option 3: Restart the systemd service directly
+sudo systemctl restart openclaw
 ```
+
+### Verify the model is available
+
+After restart, confirm `iblai-router/auto` is recognized:
+
+```bash
+# 1. Check the router is healthy
+curl -s http://127.0.0.1:8402/health | jq .
+
+# 2. Test a request through the router
+curl -s http://127.0.0.1:8402/v1/messages \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: test" \
+  -H "anthropic-version: 2023-06-01" \
+  -d '{"model":"auto","max_tokens":50,"messages":[{"role":"user","content":"Say hi"}]}' | jq .model
+
+# 3. In your OpenClaw session, verify the model resolves
 /model iblai-router/auto
 ```
 
-That's it. Every request now routes to Haiku/Sonnet/Opus based on complexity. Check savings anytime:
+If cron jobs were in error backoff before the restart, they'll resume on their next scheduled run. To force an immediate run:
+
+```
+/cron run <jobId>
+```
+
+Now use `iblai-router/auto` anywhere you'd use a model ID. Every request routes to Haiku/Sonnet/Opus based on complexity. Check savings anytime:
 
 ```bash
 curl -s http://127.0.0.1:8402/stats | jq .
@@ -508,6 +541,51 @@ Make sure no cron jobs or agent configs still reference `iblai-router/auto` — 
 ├── config.json    # All scoring config (hot-reloaded on change)
 └── README.md      # This file
 ```
+
+## Troubleshooting
+
+### `model not allowed: iblai-router/auto`
+
+OpenClaw hasn't picked up the model provider yet. **You need to restart OpenClaw** after adding the provider to `openclaw.json`. See the restart steps in Quick Start above.
+
+If you've already restarted and still see this, check that the provider block is in your `openclaw.json` under `models.providers.iblai-router` with `"api": "anthropic-messages"` and at least one model with `"id": "auto"`.
+
+### Cron jobs stuck in error backoff
+
+After fixing a model error, cron jobs may be in exponential backoff (up to 1 hour between retries). Force an immediate run:
+
+```
+/cron run <jobId>
+```
+
+Or from the API: trigger a manual run via the cron management endpoint.
+
+### Router is running but requests fail
+
+```bash
+# Check the service is actually listening
+curl -s http://127.0.0.1:8402/health
+
+# Check logs for errors (wrong API key, network issues)
+journalctl -u iblai-router -n 20
+
+# Verify your Anthropic API key works
+curl -s https://api.anthropic.com/v1/messages \
+  -H "x-api-key: $ANTHROPIC_API_KEY" \
+  -H "anthropic-version: 2023-06-01" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"claude-3-5-haiku-20241022","max_tokens":10,"messages":[{"role":"user","content":"hi"}]}' | jq .
+```
+
+### Config changes not taking effect
+
+`config.json` changes (keywords, weights, boundaries, model IDs) are hot-reloaded — no restart needed. But changes to **environment variables** (API key, port) require a service restart:
+
+```bash
+sudo systemctl restart iblai-router
+```
+
+---
 
 ## Environment Variables
 
