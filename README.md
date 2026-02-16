@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="https://ibl.ai/images/iblai-logo.png" alt="ibl.ai" width="300">
+<a href="https://ibl.ai"><img src="https://ibl.ai/images/iblai-logo.png" alt="ibl.ai" width="300"></a>
 
 # OpenClaw Router
 
