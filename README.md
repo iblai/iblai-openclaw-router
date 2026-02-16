@@ -4,6 +4,8 @@
 
 A zero-dependency Node.js proxy that sits between OpenClaw and the Anthropic API, automatically routing each request to the cheapest Claude model capable of handling it. Inspired by [ClawRouter](https://github.com/BlockRunAI/ClawRouter)'s weighted scoring approach.
 
+**Everything runs locally on your OpenClaw server.** No data is sent to ibl.ai or any third party — the router is a localhost proxy that forwards directly to your chosen LLM provider (Anthropic, OpenRouter, etc.) using your own API key.
+
 **Install from your terminal:**
 
 ```bash
