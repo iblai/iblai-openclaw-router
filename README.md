@@ -546,9 +546,26 @@ Make sure no cron jobs or agent configs still reference `iblai-router/auto` — 
 
 ### `model not allowed: iblai-router/auto`
 
-OpenClaw hasn't picked up the model provider yet. **You need to restart OpenClaw** after adding the provider to `openclaw.json`. See the restart steps in Quick Start above.
+This usually means one of two things:
 
-If you've already restarted and still see this, check that the provider block is in your `openclaw.json` under `models.providers.iblai-router` with `"api": "anthropic-messages"` and at least one model with `"id": "auto"`.
+1. **Model allowlist**: If you have `agents.defaults.models` in your `openclaw.json` (used for cache settings or other per-model config), it acts as a **model allowlist**. You must add `iblai-router/auto` to it:
+
+```json
+{
+  "agents": {
+    "defaults": {
+      "models": {
+        "iblai-router/auto": {},
+        "anthropic/claude-opus-4.6": { ... }
+      }
+    }
+  }
+}
+```
+
+2. **Restart required**: OpenClaw caches available models at startup. After adding the provider to `openclaw.json`, restart OpenClaw (see Quick Start above).
+
+If you've done both and still see the error, verify the provider block is in your `openclaw.json` under `models.providers.iblai-router` with `"api": "anthropic-messages"` and at least one model with `"id": "auto"`.
 
 ### Cron jobs stuck in error backoff
 
