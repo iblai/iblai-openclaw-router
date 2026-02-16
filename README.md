@@ -2,7 +2,7 @@
 
 <img src="https://ibl.ai/images/iblai-logo.png" alt="ibl.ai" width="300">
 
-# ibl.ai Router
+# OpenClaw Router
 
 Route every OpenClaw request to the cheapest Claude model that can handle it.
 
