@@ -160,10 +160,28 @@ Each dimension has a keyword list that shifts the score. Add words relevant to y
 }
 ```
 
-**Rule of thumb:**
-- Words in `simpleKeywords` and `relayKeywords` push toward LIGHT (cheap)
-- Words in `reasoningKeywords`, `domainKeywords`, `technicalKeywords` push toward HEAVY (capable)
-- Words in `agenticKeywords`, `imperativeVerbs`, `codeKeywords` push toward MEDIUM/HEAVY
+Each keyword list pushes the score in a direction. The score determines which model handles the request:
+
+| Keyword list | Effect on score | Routes toward | Why |
+|---|---|---|---|
+| `simpleKeywords` | ↓ lowers score | **LIGHT** (Haiku) | Simple lookups, FAQs — any small model handles these fine |
+| `relayKeywords` | ↓ lowers score | **LIGHT** (Haiku) | Pass-through tasks (send a message, check status) need no reasoning |
+| `imperativeVerbs` | ↑ raises score slightly | **MEDIUM** (Sonnet) | Action verbs ("create", "update", "deploy") imply structured work |
+| `codeKeywords` | ↑ raises score | **MEDIUM→HEAVY** | Code generation/review benefits from stronger models |
+| `agenticKeywords` | ↑ raises score | **MEDIUM→HEAVY** | Multi-step workflows ("triage all", "audit", "investigate") need planning |
+| `technicalKeywords` | ↑ raises score | **HEAVY** (Opus) | Domain-specific technical work needs deep understanding |
+| `reasoningKeywords` | ↑↑ raises score strongly | **HEAVY** (Opus) | Analysis, synthesis, and complex reasoning need the strongest model |
+| `domainKeywords` | ↑ raises score | **HEAVY** (Opus) | Specialized domain terms signal expert-level tasks |
+
+The router combines all 14 dimensions (keyword lists + structural signals like token count, code presence, question complexity) into a single weighted score, then maps it to a tier:
+
+```
+score < 0.0   →  LIGHT   (fast, cheap — handles ~45% of typical agent traffic)
+0.0 – 0.35    →  MEDIUM  (balanced — handles ~40%)
+score > 0.35  →  HEAVY   (full power — handles ~15%)
+```
+
+**The key insight:** most agent workloads are simple relays or structured tasks. Only ~15% actually need the most capable (and expensive) model. The keyword lists help the router make that distinction in under 1ms.
 
 ### Adjust tier boundaries
 
