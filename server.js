@@ -186,24 +186,36 @@ function proxyToAnthropic(req, res, body, routedModel) {
   body.model = routedModel;
   const payload = JSON.stringify(body);
 
+  // Support custom API base URL from config (e.g. OpenRouter)
+  const baseUrl = config.apiBaseUrl || "https://api.anthropic.com";
+  const parsed = new URL(baseUrl);
+
   const options = {
-    hostname: "api.anthropic.com",
-    port: 443,
-    path: "/v1/messages",
+    hostname: parsed.hostname,
+    port: parsed.port || (parsed.protocol === "https:" ? 443 : 80),
+    path: (parsed.pathname.replace(/\/$/, "") || "") + "/v1/messages",
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "x-api-key": ANTHROPIC_API_KEY,
-      "anthropic-version": req.headers["anthropic-version"] || "2023-06-01",
       "Content-Length": Buffer.byteLength(payload),
     },
   };
 
-  if (req.headers["anthropic-beta"]) {
-    options.headers["anthropic-beta"] = req.headers["anthropic-beta"];
+  // Use appropriate auth header based on target
+  const isOpenRouter = parsed.hostname.includes("openrouter");
+  if (isOpenRouter) {
+    options.headers["Authorization"] = `Bearer ${ANTHROPIC_API_KEY}`;
+    options.headers["HTTP-Referer"] = config.openRouterReferer || "https://github.com/iblai/iblai-openclaw-router";
+  } else {
+    options.headers["x-api-key"] = ANTHROPIC_API_KEY;
+    options.headers["anthropic-version"] = req.headers["anthropic-version"] || "2023-06-01";
+    if (req.headers["anthropic-beta"]) {
+      options.headers["anthropic-beta"] = req.headers["anthropic-beta"];
+    }
   }
 
-  const upstream = https.request(options, (upstreamRes) => {
+  const transport = parsed.protocol === "https:" ? https : http;
+  const upstream = transport.request(options, (upstreamRes) => {
     res.writeHead(upstreamRes.statusCode, upstreamRes.headers);
     upstreamRes.pipe(res);
   });

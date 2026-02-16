@@ -307,6 +307,85 @@ Compare your Anthropic usage dashboard before and after enabling the router. The
 
 ---
 
+## 4. Using Non-Anthropic Models
+
+The router's scoring engine is model-agnostic — it classifies request complexity, not model capabilities. You can swap in models from any provider that speaks the Anthropic Messages API format (or use an adapter).
+
+### OpenAI models via OpenRouter
+
+[OpenRouter](https://openrouter.ai) exposes OpenAI, Google, and other models behind an Anthropic-compatible API. Point the router at OpenRouter instead of Anthropic:
+
+```bash
+# In iblai-router.service, change:
+Environment=ANTHROPIC_API_KEY=sk-or-YOUR-OPENROUTER-KEY
+```
+
+Then update `config.json` with OpenRouter model IDs:
+
+```json
+{
+  "models": {
+    "LIGHT":  "openai/gpt-4.1-mini",
+    "MEDIUM": "openai/gpt-4.1",
+    "HEAVY":  "openai/o3"
+  },
+  "apiBaseUrl": "https://openrouter.ai/api/v1"
+}
+```
+
+> **Note:** The `apiBaseUrl` field in config.json overrides the default `https://api.anthropic.com` target. The server will proxy requests to whichever base URL you specify.
+
+### Google models via OpenRouter
+
+```json
+{
+  "models": {
+    "LIGHT":  "google/gemini-2.0-flash-lite",
+    "MEDIUM": "google/gemini-2.5-flash",
+    "HEAVY":  "google/gemini-2.5-pro"
+  },
+  "apiBaseUrl": "https://openrouter.ai/api/v1"
+}
+```
+
+### Mixed-provider tiers
+
+The most cost-effective setup often mixes providers. Use the cheapest model that handles each tier well:
+
+```json
+{
+  "models": {
+    "LIGHT":  "google/gemini-2.0-flash-lite",
+    "MEDIUM": "anthropic/claude-sonnet-4-20250514",
+    "HEAVY":  "openai/o3"
+  },
+  "apiBaseUrl": "https://openrouter.ai/api/v1"
+}
+```
+
+When mixing providers via OpenRouter, all models must use OpenRouter model IDs (prefixed with provider name).
+
+### Direct OpenAI API (requires server.js changes)
+
+The router currently speaks **Anthropic Messages API** natively. To proxy directly to OpenAI's API (without OpenRouter), you'd need to transform the request/response format. This is on the roadmap but not yet supported — use OpenRouter as the translation layer for now.
+
+### Updating the systemd service
+
+After changing providers, restart the router to pick up the new API key:
+
+```bash
+# Edit the service file with the new key
+sudo systemctl daemon-reload
+sudo systemctl restart iblai-router
+
+# Verify routing targets
+curl -s http://127.0.0.1:8402/health | jq .
+```
+
+The config.json changes (model IDs, apiBaseUrl) are hot-reloaded automatically — no restart needed for those.
+
+---
+
 ## Files
 
 ```
