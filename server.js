@@ -159,13 +159,8 @@ function classify(text, estimatedTokens) {
 
 function extractText(body) {
   let text = "";
-  if (typeof body.system === "string") text += body.system + " ";
-  if (Array.isArray(body.system)) {
-    for (const s of body.system) {
-      if (typeof s === "string") text += s + " ";
-      else if (s.text) text += s.text + " ";
-    }
-  }
+  // Skip system prompt — it's the same for every request (OpenClaw's large
+  // system prompt) and inflates every score to HEAVY. Score only user messages.
   if (Array.isArray(body.messages)) {
     const recent = body.messages.slice(-3);
     for (const msg of recent) {
