@@ -1,4 +1,4 @@
-# ibl.ai Router
+# ibl.ai OpenClaw Router
 
 ## Local Cost-Optimizing Model Router for OpenClaw
 
