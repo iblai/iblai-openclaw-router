@@ -2,6 +2,16 @@
 
 A zero-dependency Node.js proxy that sits between OpenClaw and the Anthropic API, automatically routing each request to the cheapest Claude model capable of handling it. Inspired by [ClawRouter](https://github.com/BlockRunAI/ClawRouter)'s weighted scoring approach.
 
+**Install in 3 commands:**
+
+```bash
+git clone https://github.com/iblai/iblai-openclaw-router.git router
+cd router && bash scripts/install.sh
+# paste the /config commands it prints into your OpenClaw session
+```
+
+That's it — `iblai-router/auto` is now available as a model. Typical savings: **~77%** vs always using the most expensive model. Uninstall anytime with `bash scripts/uninstall.sh`.
+
 ## How It Works
 
 ```
