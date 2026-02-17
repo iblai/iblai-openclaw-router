@@ -519,7 +519,66 @@ The config.json changes (model IDs, apiBaseUrl) are hot-reloaded automatically �
 
 ---
 
-## 5. Disabling the Router
+## 5. Updating
+
+When a new version is released, update your installation in one of three ways:
+
+### Option A: Ask your OpenClaw agent (easiest)
+
+> Update iblai-router to the latest version
+
+Your agent will pull the latest code, restart the service, and confirm the new version is running.
+
+### Option B: Git pull + restart
+
+```bash
+cd ~/.openclaw/workspace/router   # or wherever you cloned the repo
+git pull origin main
+sudo systemctl restart iblai-router
+```
+
+Verify the update:
+
+```bash
+curl -s http://127.0.0.1:8402/health | jq .
+```
+
+### Option C: Re-run the install script
+
+```bash
+cd ~/.openclaw/workspace/router
+git pull origin main
+bash scripts/install.sh
+```
+
+The install script is idempotent — it will update the systemd service, restart the router, and re-register the model provider if needed.
+
+### What gets updated
+
+- **`server.js`** — scoring engine, proxy logic, bug fixes
+- **`config.json`** — new keywords, updated model IDs, tuned weights
+
+> ⚠️ **If you've customized `config.json`** (added your own keywords, changed weights, swapped models), `git pull` will conflict. Either:
+> - Stash your changes first: `git stash && git pull && git stash pop`
+> - Or keep your config outside the repo: `ROUTER_CONFIG=/path/to/my-config.json` in the systemd service file. This way `git pull` never touches your config.
+
+### Checking for updates
+
+```bash
+cd ~/.openclaw/workspace/router
+git fetch origin
+git log HEAD..origin/main --oneline
+```
+
+If there's output, a newer version is available. If empty, you're up to date.
+
+### Release notes
+
+Check [Releases](https://github.com/iblai/iblai-openclaw-router/releases) for changelogs and upgrade notes between versions.
+
+---
+
+## 6. Disabling the Router
 
 ### Temporarily (keep config, stop routing)
 
