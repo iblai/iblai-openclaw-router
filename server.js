@@ -177,8 +177,23 @@ function extractText(body) {
 
 // ─── Proxy to Anthropic ───
 
-function proxyToAnthropic(req, res, body, routedModel) {
+function proxyToAnthropic(req, res, body, routedModel, tier) {
   body.model = routedModel;
+
+  // Haiku doesn't support thinking — strip it when routing to LIGHT tier
+  if (tier === "LIGHT") {
+    delete body.thinking;
+    // Also strip thinking budget from anthropic-beta header
+    if (req.headers["anthropic-beta"]) {
+      const betas = req.headers["anthropic-beta"].split(",").map(s => s.trim())
+        .filter(b => !b.startsWith("thinking") && !b.startsWith("extended-thinking"));
+      if (betas.length > 0) {
+        req.headers["anthropic-beta"] = betas.join(",");
+      } else {
+        delete req.headers["anthropic-beta"];
+      }
+    }
+  }
   const payload = JSON.stringify(body);
 
   // Support custom API base URL from config (e.g. OpenRouter)
@@ -296,7 +311,7 @@ const server = http.createServer((req, res) => {
       );
     }
 
-    proxyToAnthropic(req, res, body, decision.model);
+    proxyToAnthropic(req, res, body, decision.model, decision.tier);
   });
 });
 
