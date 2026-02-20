@@ -1,11 +1,11 @@
 {
   "models": {
-    "LIGHT": "claude-haiku-4-5-20250514",
+    "LIGHT": "claude-4-5-haiku-20241022",
     "MEDIUM": "claude-sonnet-4-6",
     "HEAVY": "claude-opus-4-6"
   },
   "costs": {
-    "claude-haiku-4-5-20250514": {
+    "claude-4-5-haiku-20241022": {
       "input": 1.0,
       "output": 5.0
     },
